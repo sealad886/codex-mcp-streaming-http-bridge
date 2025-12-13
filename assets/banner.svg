@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="400" viewBox="0 0 1600 400" role="img" aria-label="Codex MCP HTTP Bridge">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1020"/>
+      <stop offset="60%" stop-color="#101a33"/>
+      <stop offset="100%" stop-color="#0a0f1f"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="45%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.35 0" result="c"/>
+      <feMerge>
+        <feMergeNode in="c"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" stroke-opacity="0.25" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="400" fill="url(#bg)"/>
+  <rect width="1600" height="400" fill="url(#grid)" opacity="0.7"/>
+
+  <!-- Glow blobs -->
+  <g filter="url(#soft)">
+    <circle cx="260" cy="140" r="120" fill="#7dd3fc" fill-opacity="0.22"/>
+    <circle cx="520" cy="260" r="160" fill="#a78bfa" fill-opacity="0.18"/>
+    <circle cx="1320" cy="190" r="200" fill="#34d399" fill-opacity="0.14"/>
+  </g>
+
+  <!-- Left icon: MCP (stdio) -->
+  <g transform="translate(110 92)">
+    <rect x="0" y="0" width="216" height="216" rx="28" fill="#0b1226" stroke="#334155" stroke-opacity="0.55"/>
+    <path d="M40 72 H176" stroke="url(#accent)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M40 108 H176" stroke="#94a3b8" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round"/>
+    <path d="M40 144 H176" stroke="#94a3b8" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round"/>
+
+    <g transform="translate(46 164)" fill="#94a3b8" fill-opacity="0.9">
+      <circle cx="0" cy="0" r="6"/>
+      <circle cx="18" cy="0" r="6"/>
+      <circle cx="36" cy="0" r="6"/>
+    </g>
+
+    <text x="108" y="62" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="18" fill="#e2e8f0" opacity="0.9">MCP • JSON-RPC</text>
+    <text x="108" y="188" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="16" fill="#94a3b8" opacity="0.85">stdio</text>
+  </g>
+
+  <!-- Connector -->
+  <g transform="translate(350 192)">
+    <path d="M0 0 C90 0, 90 -60, 180 -60" fill="none" stroke="url(#accent)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M0 0 C90 0, 90 60, 180 60" fill="none" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+    <circle cx="0" cy="0" r="8" fill="#e2e8f0"/>
+    <circle cx="180" cy="-60" r="8" fill="#e2e8f0"/>
+    <circle cx="180" cy="60" r="8" fill="#e2e8f0" opacity="0.8"/>
+  </g>
+
+  <!-- Right icon: HTTP + SSE -->
+  <g transform="translate(560 92)">
+    <rect x="0" y="0" width="216" height="216" rx="28" fill="#0b1226" stroke="#334155" stroke-opacity="0.55"/>
+
+    <!-- signal waves -->
+    <path d="M56 150 q52 -58 104 0" fill="none" stroke="url(#accent)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M74 150 q34 -38 68 0" fill="none" stroke="#94a3b8" stroke-opacity="0.7" stroke-width="6" stroke-linecap="round"/>
+    <path d="M92 150 q16 -18 32 0" fill="none" stroke="#94a3b8" stroke-opacity="0.55" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="108" cy="154" r="7" fill="#e2e8f0"/>
+
+    <text x="108" y="62" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="18" fill="#e2e8f0" opacity="0.9">HTTP • SSE</text>
+    <text x="108" y="188" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="16" fill="#94a3b8" opacity="0.85">localhost:&lt;port&gt;</text>
+  </g>
+
+  <!-- Title block -->
+  <g transform="translate(820 108)">
+    <text x="0" y="0" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="46" font-weight="800" fill="#e2e8f0">Codex MCP HTTP Bridge</text>
+    <text x="0" y="44" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="20" fill="#cbd5e1" opacity="0.95">OpenAI-compatible endpoints + reliable streaming deltas</text>
+    <text x="0" y="74" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="16" fill="#94a3b8">Codex ↔ MCP (stdio JSON-RPC) ↔ Express ↔ SSE</text>
+
+    <rect x="0" y="106" width="640" height="2" fill="url(#accent)" opacity="0.9"/>
+
+    <g transform="translate(0 134)">
+      <text x="0" y="0" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="16" fill="#cbd5e1">
+        Built for local-first tooling: stream <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">choices[0].delta.content</tspan> + finish with <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace">[DONE]</tspan>.
+      </text>
+    </g>
+  </g>
+
+  <!-- footer chip -->
+  <g transform="translate(820 318)">
+    <rect x="0" y="0" width="520" height="46" rx="23" fill="#0b1226" stroke="#334155" stroke-opacity="0.55"/>
+    <circle cx="26" cy="23" r="6" fill="url(#accent)"/>
+    <text x="46" y="29" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="14" fill="#cbd5e1">/v1/chat/completions • stream=true • SSE</text>
+  </g>
+</svg>

@@ -54,7 +54,7 @@
 **Related Files / Modules:**
 
 - src/codex/CodexMcpBridge.ts
-- src/server.ts
+- src/app.ts
 
 ### SSE Output Format (OpenAI Chat Completions)
 
@@ -80,7 +80,7 @@
 
 - src/http/sse.ts
 - src/codex/CodexMcpBridge.ts
-- src/server.ts
+- src/app.ts
 
 ### Event Type Normalization and Delta Extraction
 
@@ -127,6 +127,7 @@
 
 **Related Files / Modules:**
 
+- src/app.ts
 - src/server.ts
 - src/codex/CodexMcpBridge.ts
 - src/http/auth.ts
