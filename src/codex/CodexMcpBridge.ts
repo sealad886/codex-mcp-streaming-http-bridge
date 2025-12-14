@@ -42,6 +42,16 @@ export type ActiveStream = {
   hardTimeout?: NodeJS.Timeout;
   done: boolean;
   lastEventAt: number;
+
+  // Tracks what we've already emitted as `choices[0].delta.content` for this stream.
+  // Codex notifications sometimes contain snapshots and/or duplicated deltas.
+  // Clients like Xcode will naively append, so we must convert to monotonic deltas.
+  emittedText: string;
+
+  // IMPORTANT: if we stream any delta events, we must NOT re-stream the full final result.
+  // Otherwise some clients (notably Xcode) will append duplicated snapshots and you get
+  // "ExplExploringoring..." garbage.
+  hasStreamedDelta: boolean;
 };
 
 type CodexBridgeOptions = {
@@ -59,6 +69,8 @@ export class CodexMcpBridge {
   private streamAliases = new Map<string, string>(); // aliasId -> requestId
   private restarts = 0;
   private startedAt = Date.now();
+
+  private readonly logEvents: boolean;
 
   private readonly rpcTimeoutMs: number;
   private readonly streamChunkChars: number;
@@ -90,6 +102,8 @@ export class CodexMcpBridge {
 
     this.codexBin = opts.codexBin ?? (process.env.CODEX_BIN ?? "codex");
     this.codexProfile = opts.codexProfile ?? (process.env.CODEX_PROFILE ?? "clean");
+
+    this.logEvents = (process.env.CODEX_BRIDGE_LOG_EVENTS ?? "1") !== "0";
   }
 
   start() {
@@ -231,7 +245,9 @@ export class CodexMcpBridge {
     }
 
     if (opts?.finalText) {
-      sendContent(opts.finalText);
+      if (!stream.hasStreamedDelta) {
+        sendContent(opts.finalText);
+      }
     }
 
     stream.done = true;
@@ -424,6 +440,39 @@ export class CodexMcpBridge {
     return "";
   }
 
+  private coalesceTextDelta(stream: ActiveStream, incomingText: string): string {
+    if (!incomingText) return "";
+
+    const emitted = stream.emittedText ?? "";
+
+    // Exact duplicates (common when multiple event types carry the same chunk).
+    if (emitted.endsWith(incomingText)) return "";
+
+    // Snapshot-to-delta conversion: incoming is the full text so far.
+    if (incomingText.startsWith(emitted)) {
+      return incomingText.slice(emitted.length);
+    }
+
+    // Overlap case: incoming begins with the tail of what we've already emitted.
+    const max = Math.min(emitted.length, incomingText.length);
+    for (let k = max; k > 0; k -= 1) {
+      if (emitted.slice(-k) === incomingText.slice(0, k)) {
+        return incomingText.slice(k);
+      }
+    }
+
+    return incomingText;
+  }
+
+  private appendEmittedText(stream: ActiveStream, appended: string) {
+    if (!appended) return;
+    const next = (stream.emittedText ?? "") + appended;
+
+    // Guard memory: we only need enough history to coalesce overlaps/snapshots.
+    const maxChars = 256_000;
+    stream.emittedText = next.length > maxChars ? next.slice(next.length - maxChars) : next;
+  }
+
   private looksLikeTextDeltaType(canonType: string): boolean {
     if (!canonType.endsWith("_delta")) return false;
     return /(^|_)(text|content)(_|$)/.test(canonType);
@@ -497,7 +546,7 @@ export class CodexMcpBridge {
     if (!resolved) return;
 
     const { requestId, stream, usedFallback } = resolved;
-    if (usedFallback) {
+    if (usedFallback && this.logEvents) {
       log(`[event] correlation fallback to sole active stream requestId=${requestId}`);
     }
 
@@ -521,11 +570,13 @@ export class CodexMcpBridge {
     this.addStreamAlias(requestId, m?.responseId);
     this.addStreamAlias(requestId, m?.response_id);
 
-    log(
-      `[event] meta.requestId=${params?._meta?.requestId ?? ""} ` +
-        `id=${params?.id ?? ""} type=${rawType} canon=${canonType} ` +
-        `deltaLen=${extractedDelta ? extractedDelta.length : 0}`
-    );
+    if (this.logEvents) {
+      log(
+        `[event] meta.requestId=${params?._meta?.requestId ?? ""} ` +
+          `id=${params?.id ?? ""} type=${rawType} canon=${canonType} ` +
+          `deltaLen=${extractedDelta ? extractedDelta.length : 0}`
+      );
+    }
 
     const normalized = this.normalizeCodexEvent(params);
     if (!normalized.length) return;
@@ -534,7 +585,13 @@ export class CodexMcpBridge {
       if (stream.closed || stream.done) return;
 
       if (ev.kind === "text-delta") {
-        for (const chunk of chunkString(ev.text, this.streamChunkChars)) {
+        const toEmit = this.coalesceTextDelta(stream, ev.text);
+        if (!toEmit) continue;
+
+        stream.hasStreamedDelta = true;
+        this.appendEmittedText(stream, toEmit);
+
+        for (const chunk of chunkString(toEmit, this.streamChunkChars)) {
           if (!chunk) continue;
           if (stream.closed || stream.done) return;
           sseSend(stream.res, {

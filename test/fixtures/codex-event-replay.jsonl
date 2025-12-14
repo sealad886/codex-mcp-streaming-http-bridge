@@ -1,0 +1,5 @@
+{"jsonrpc":"2.0","method":"codex/event","params":{"_meta":{"requestId":"req-1"},"id":"resp-123","msg":{"type":"output_text_delta","delta":"Hello ","response_id":"resp-123"}}}
+{"jsonrpc":"2.0","method":"codex/event","params":{"response_id":"resp-123","msg":{"type":"output_text_delta","text":"world"}}}
+{"jsonrpc":"2.0","method":"codex/event","params":{"response_id":"resp-123","msg":{"type":"output_text_delta","part":{"text":"!"}}}}
+{"jsonrpc":"2.0","method":"codex/event","params":{"response_id":"resp-123","msg":{"type":"output_text_delta","parts":[{"text":" More"},{"text":" text"}]}}}
+{"jsonrpc":"2.0","method":"codex/event","params":{"response_id":"resp-123","msg":{"type":"response.completed"}}}

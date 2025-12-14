@@ -7,7 +7,7 @@ const PORT = Number(process.env.PORT ?? "3333");
 const MODEL_ID = process.env.MODEL_ID ?? "gpt-5.2";
 
 // Timeouts / streaming behavior
-const RPC_TIMEOUT_MS = Number(process.env.RPC_TIMEOUT_MS ?? "120000");
+const RPC_TIMEOUT_MS = Number(process.env.RPC_TIMEOUT_MS ?? "1200000");
 const SSE_KEEPALIVE_MS = Number(process.env.SSE_KEEPALIVE_MS ?? "15000");
 const STREAM_CHUNK_CHARS = Number(process.env.STREAM_CHUNK_CHARS ?? "64");
 const HARD_REQUEST_TIMEOUT_MS = Number(process.env.HARD_REQUEST_TIMEOUT_MS ?? "300000"); // 5 min

@@ -79,10 +79,26 @@ Auth:
 
 Streaming behavior:
 
-- `RPC_TIMEOUT_MS` (default `120000`)
+- `RPC_TIMEOUT_MS` (default `1200000`)
 - `SSE_KEEPALIVE_MS` (default `15000`)
 - `STREAM_CHUNK_CHARS` (default `64`)
 - `HARD_REQUEST_TIMEOUT_MS` (default `300000`)
+
+Logging / debugging:
+
+- `BRIDGE_LOG_REQUESTS` (`1` to log full inbound HTTP requests; default `0`)
+- `BRIDGE_LOG_REQUESTS_REDACT` (`0` to disable redaction; default `1`)
+- `CODEX_BRIDGE_LOG_EVENTS` (`0` to suppress very noisy per-event logs; default `1`)
+
+System prompt handling (Xcode):
+
+Some clients (notably Xcode) send very large `role: "system"` messages intended to drive their own internal tooling. When forwarded verbatim, those instructions can dominate the prompt and make Codex act overly cautious (e.g. “don’t write code yet”, “only respond with ##SEARCH: …”).
+
+- `BRIDGE_SYSTEM_MESSAGES=all|none|first|last` (default `all`)
+  - Default is `none` when `User-Agent` starts with `Xcode/` (unless explicitly overridden).
+  - For Xcode, `none` is often best.
+- `BRIDGE_SYSTEM_MAX_CHARS=<n>` (default `0` meaning “no limit”)
+  - Applied per system message when `BRIDGE_SYSTEM_MESSAGES` includes any system messages.
 
 ## Tests & CI
 

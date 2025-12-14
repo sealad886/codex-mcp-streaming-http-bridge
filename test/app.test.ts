@@ -21,6 +21,9 @@ async function startServer(app: any): Promise<ServerHandle> {
 async function makeApp(opts?: { apiKey?: string }) {
   vi.resetModules();
 
+  // Keep tests quiet and deterministic even though we reset process.env below.
+  process.env.CODEX_BRIDGE_LOG_EVENTS = "0";
+
   if (opts?.apiKey) process.env.API_KEY = opts.apiKey;
   else delete process.env.API_KEY;
 
@@ -57,7 +60,7 @@ async function makeApp(opts?: { apiKey?: string }) {
     hardRequestTimeoutMs: 5_000,
   });
 
-  return { app, codex };
+  return { app, codex, bridge };
 }
 
 describe("createApp", () => {
@@ -66,12 +69,14 @@ describe("createApp", () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    process.env.CODEX_BRIDGE_LOG_EVENTS = "0";
   });
 
   afterEach(async () => {
     if (server) await server.close();
     server = null;
     process.env = { ...originalEnv };
+    process.env.CODEX_BRIDGE_LOG_EVENTS = "0";
     vi.restoreAllMocks();
   });
 
@@ -135,7 +140,7 @@ describe("createApp", () => {
     expect(json.choices?.[0]?.message?.content).toBe("ok");
   });
 
-  it("POST /v1/chat/completions (stream) yields delta + [DONE]", async () => {
+  it("POST /v1/chat/completions (stream, finalText-only) yields delta + [DONE]", async () => {
     const { app, codex } = await makeApp({ apiKey: "sekret" });
     server = await startServer(app);
 
@@ -161,5 +166,56 @@ describe("createApp", () => {
     expect(text).toContain('"delta":{"role":"assistant"}');
     expect(text).toContain('"delta":{"content":"streamed"');
     expect(text).toContain("data: [DONE]");
+  });
+
+  it("POST /v1/chat/completions (stream, codex/event-driven) streams deltas and suppresses finalText", async () => {
+    const { app, codex, bridge } = await makeApp({ apiKey: "sekret" });
+
+    (codex as any).toolsCallStreaming = vi.fn(async (_prompt: string, requestId: string) => {
+      const b = bridge as any;
+      const respId = "resp-123";
+
+      const notify = (params: any) =>
+        b.handleCodexEvent({
+          jsonrpc: "2.0",
+          method: "codex/event",
+          params,
+        });
+
+      // Like real Codex: first event includes the requestId, subsequent ones may only include response_id.
+      notify({ _meta: { requestId }, id: respId, msg: { type: "output_text_delta", delta: "hello ", response_id: respId } });
+      notify({ response_id: respId, msg: { type: "output_text_delta", text: "world" } });
+      notify({ response_id: respId, msg: { type: "response.completed" } });
+
+      // Real tools/call usually returns a final snapshot too; it must NOT be appended once deltas streamed.
+      return { content: [{ type: "text", text: "SHOULD_NOT_APPEAR" }] };
+    });
+
+    server = await startServer(app);
+
+    const res = await fetch(`${server.baseUrl}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer sekret",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-5.2",
+        stream: true,
+        messages: [{ role: "user", content: "hi" }],
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((codex as any).toolsCallStreaming).toHaveBeenCalledOnce();
+
+    const text = await res.text();
+
+    expect(res.headers.get("content-type")).toContain("text/event-stream");
+    expect(text).toContain('"delta":{"role":"assistant"}');
+    expect(text).toContain('"delta":{"content":"hello "');
+    expect(text).toContain('"delta":{"content":"world"');
+    expect(text).toContain("data: [DONE]");
+    expect(text).not.toContain("SHOULD_NOT_APPEAR");
   });
 });
